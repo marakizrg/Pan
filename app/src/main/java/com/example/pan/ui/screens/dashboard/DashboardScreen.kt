@@ -32,7 +32,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -40,11 +44,21 @@ import androidx.compose.ui.unit.dp
 import com.example.pan.ui.components.PanDrawerContent
 import kotlinx.coroutines.launch
 
+data class ScheduleEntry(
+    val day: String,
+    val time: String,
+    val course: String,
+    val room: String
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(onNavigateTo: (String) -> Unit) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope       = rememberCoroutineScope()
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var schedule by remember { mutableStateOf(listOf<ScheduleEntry>()) }
 
     ModalNavigationDrawer(
         drawerState   = drawerState,
@@ -81,8 +95,10 @@ fun DashboardScreen(onNavigateTo: (String) -> Unit) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                CreateScheduleCard()
-                CalendarCard()
+                CreateScheduleCard(onImport = {
+                    schedule = loadScheduleFromAssets(context)
+                })
+                CalendarCard(schedule = schedule)
                 AcademicNotificationsCard()
             }
         }
@@ -90,9 +106,9 @@ fun DashboardScreen(onNavigateTo: (String) -> Unit) {
 }
 
 @Composable
-private fun CreateScheduleCard() {
+private fun CreateScheduleCard(onImport: () -> Unit) {
     ElevatedCard(
-        onClick   = { },
+        onClick   = { onImport() },
         modifier  = Modifier.fillMaxWidth(),
         colors    = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.primary
@@ -128,14 +144,8 @@ private fun CreateScheduleCard() {
     }
 }
 
-private val mockSchedule = listOf(
-    Triple("10:00", "Εισαγωγή στον Προγραμματισμό", "Αμφιθέατρο Α"),
-    Triple("12:00", "Μαθηματικά Ι",                  "Αίθουσα Β2"),
-    Triple("14:00", "Αρχές Οικονομικής Θεωρίας",     "Αμφιθέατρο Β"),
-)
-
 @Composable
-private fun CalendarCard() {
+private fun CalendarCard(schedule: List<ScheduleEntry>) {
     ElevatedCard(
         modifier  = Modifier.fillMaxWidth(),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
@@ -164,29 +174,32 @@ private fun CalendarCard() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(16.dp))
-            Text(
-                "Σήμερα",
-                style      = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(Modifier.height(8.dp))
-            mockSchedule.forEachIndexed { index, (time, course, room) ->
-                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Row(
-                    modifier              = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(course, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text(room,   style = MaterialTheme.typography.bodySmall,  color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (schedule.isEmpty()) {
+                Text(
+                    "No classes imported yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                schedule.forEachIndexed { index, entry ->
+                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(entry.course, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                            Text(entry.room,   style = MaterialTheme.typography.bodySmall,  color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(entry.day,    style = MaterialTheme.typography.bodySmall,  color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(
+                            entry.time,
+                            style      = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color      = MaterialTheme.colorScheme.primary
+                        )
                     }
-                    Text(
-                        time,
-                        style      = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color      = MaterialTheme.colorScheme.primary
-                    )
                 }
             }
         }
@@ -246,5 +259,20 @@ private fun AcademicNotificationsCard() {
                 }
             }
         }
+    }
+}
+
+fun loadScheduleFromAssets(context: android.content.Context): List<ScheduleEntry> {
+    val json = context.assets.open("classes.json")
+        .bufferedReader().use { it.readText() }
+    val array = org.json.JSONArray(json)
+    return List(array.length()) { i ->
+        val obj = array.getJSONObject(i)
+        ScheduleEntry(
+            day    = obj.getString("day"),
+            time   = obj.getString("time"),
+            course = obj.getString("course"),
+            room   = obj.getString("room")
+        )
     }
 }
