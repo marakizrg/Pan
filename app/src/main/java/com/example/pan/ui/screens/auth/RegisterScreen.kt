@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pan.viewmodel.AuthState
@@ -133,6 +135,64 @@ fun RegisterScreen(
                 )
             }
 
+            // Password
+            var passwordVisible by remember { mutableStateOf(false) }
+            OutlinedTextField(
+                value         = viewModel.regPassword,
+                onValueChange = { viewModel.regPassword = it },
+                label         = { Text("Κωδικός Πρόσβασης") },
+                leadingIcon   = { Icon(Icons.Default.Lock, contentDescription = null) },
+                trailingIcon  = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None
+                                       else PasswordVisualTransformation(),
+                modifier      = Modifier.fillMaxWidth(),
+                shape         = RoundedCornerShape(14.dp),
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction    = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
+            )
+
+            // Confirm Password
+            var confirmPasswordVisible by remember { mutableStateOf(false) }
+            OutlinedTextField(
+                value         = viewModel.regPasswordConfirm,
+                onValueChange = { viewModel.regPasswordConfirm = it },
+                label         = { Text("Επιβεβαίωση Κωδικού") },
+                leadingIcon   = { Icon(Icons.Default.Lock, contentDescription = null) },
+                trailingIcon  = {
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Icon(
+                            if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
+                                       else PasswordVisualTransformation(),
+                modifier      = Modifier.fillMaxWidth(),
+                shape         = RoundedCornerShape(14.dp),
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction    = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
+            )
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             SectionLabel("Στοιχεία Επικοινωνίας")
 
@@ -165,7 +225,7 @@ fun RegisterScreen(
                         readOnly      = true,
                         label         = { Text("Κωδ.") },
                         trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = countryCodeExpanded) },
-                        modifier      = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        modifier      = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                         shape         = RoundedCornerShape(14.dp),
                         singleLine    = true
                     )
@@ -187,7 +247,10 @@ fun RegisterScreen(
 
                 PanTextField(
                     value         = viewModel.regPhone,
-                    onValueChange = { viewModel.regPhone = it },
+                    onValueChange = { input ->
+                        val digits = input.filter { it.isDigit() }
+                        if (digits.length <= 10) viewModel.regPhone = digits
+                    },
                     label         = "Αριθμός Τηλεφώνου",
                     leadingIcon   = Icons.Default.Phone,
                     keyboardType  = KeyboardType.Phone,
@@ -216,7 +279,7 @@ fun RegisterScreen(
                     placeholder   = { Text("Επιλέξτε πανεπιστήμιο") },
                     modifier      = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                     shape      = RoundedCornerShape(14.dp),
                     singleLine = true
                 )
@@ -252,7 +315,7 @@ fun RegisterScreen(
                     placeholder   = { Text("Επιλέξτε έτος") },
                     modifier      = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                     shape      = RoundedCornerShape(14.dp),
                     singleLine = true
                 )

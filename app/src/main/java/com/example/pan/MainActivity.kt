@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
             PanTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color    = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
                     PanNavGraph(navController = navController)

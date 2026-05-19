@@ -33,10 +33,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pan.viewmodel.DashboardViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -53,12 +52,13 @@ data class ScheduleEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(onNavigateTo: (String) -> Unit) {
+fun DashboardScreen(
+    onNavigateTo: (String) -> Unit,
+    viewModel: DashboardViewModel = viewModel()
+) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope       = rememberCoroutineScope()
-
-    val context = androidx.compose.ui.platform.LocalContext.current
-    var schedule by remember { mutableStateOf(listOf<ScheduleEntry>()) }
+    val schedule    = viewModel.schedule
 
     ModalNavigationDrawer(
         drawerState   = drawerState,
@@ -96,7 +96,7 @@ fun DashboardScreen(onNavigateTo: (String) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 CreateScheduleCard(onImport = {
-                    schedule = loadScheduleFromAssets(context)
+                    viewModel.importSchedule()
                 })
                 CalendarCard(schedule = schedule)
                 AcademicNotificationsCard()
@@ -259,20 +259,5 @@ private fun AcademicNotificationsCard() {
                 }
             }
         }
-    }
-}
-
-fun loadScheduleFromAssets(context: android.content.Context): List<ScheduleEntry> {
-    val json = context.assets.open("classes.json")
-        .bufferedReader().use { it.readText() }
-    val array = org.json.JSONArray(json)
-    return List(array.length()) { i ->
-        val obj = array.getJSONObject(i)
-        ScheduleEntry(
-            day    = obj.getString("day"),
-            time   = obj.getString("time"),
-            course = obj.getString("course"),
-            room   = obj.getString("room")
-        )
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import com.example.pan.data.local.UserPreferences
 import com.example.pan.model.CourseEntry
 import com.example.pan.model.loadCoursesFromAssets
 
@@ -22,6 +23,8 @@ data class DegreeProgress(
 
 class DiplomaPalViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val userPrefs = UserPreferences(application)
+
     var courses by mutableStateOf<List<CourseEntry>>(emptyList())
         private set
 
@@ -35,6 +38,11 @@ class DiplomaPalViewModel(application: Application) : AndroidViewModel(applicati
 
     init {
         courses = loadCoursesFromAssets(application)
+        val userId = userPrefs.getCurrentUserId()
+        if (userId != null) {
+            val saved = userPrefs.loadCheckedCourses(userId)
+            saved.forEach { checkedCourses[it] = true }
+        }
         recalculate()
     }
 
@@ -45,6 +53,10 @@ class DiplomaPalViewModel(application: Application) : AndroidViewModel(applicati
     fun toggleCourse(id: String) {
         checkedCourses[id] = !(checkedCourses[id] ?: false)
         recalculate()
+        userPrefs.getCurrentUserId()?.let { userId ->
+            val checked = checkedCourses.filterValues { it }.keys
+            userPrefs.saveCheckedCourses(userId, checked)
+        }
     }
 
     private fun recalculate() {
