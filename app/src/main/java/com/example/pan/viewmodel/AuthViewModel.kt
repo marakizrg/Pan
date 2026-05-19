@@ -97,6 +97,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun logout() {
+        loginEmail    = ""
+        loginPassword = ""
+        rememberMe    = false
+        _authState.value = AuthState.Idle
+    }
+
     fun clearError() {
         if (_authState.value is AuthState.Error) _authState.value = AuthState.Idle
     }

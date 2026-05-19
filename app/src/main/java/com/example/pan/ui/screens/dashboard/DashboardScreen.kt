@@ -54,6 +54,7 @@ data class ScheduleEntry(
 @Composable
 fun DashboardScreen(
     onNavigateTo: (String) -> Unit,
+    onLogout: () -> Unit,
     viewModel: DashboardViewModel = viewModel()
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -64,10 +65,16 @@ fun DashboardScreen(
         drawerState   = drawerState,
         modifier      = Modifier.fillMaxSize(),
         drawerContent = {
-            PanDrawerContent(onItemClick = { route ->
-                scope.launch { drawerState.close() }
-                onNavigateTo(route)
-            })
+            PanDrawerContent(
+                onItemClick = { route ->
+                    scope.launch { drawerState.close() }
+                    onNavigateTo(route)
+                },
+                onLogout = {
+                    scope.launch { drawerState.close() }
+                    onLogout()
+                }
+            )
         }
     ) {
         Scaffold(

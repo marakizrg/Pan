@@ -11,12 +11,15 @@ import com.example.pan.ui.screens.classlocator.ClassLocatorScreen
 import com.example.pan.ui.screens.dashboard.DashboardScreen
 import com.example.pan.ui.screens.diplomapal.DiplomaPalScreen
 import com.example.pan.ui.screens.notifications.NotificationsScreen
+import com.example.pan.ui.screens.profile.ProfileScreen
 import com.example.pan.ui.screens.studyguide.StudyGuideScreen
+import com.example.pan.data.local.UserPreferences
 import com.example.pan.viewmodel.AuthViewModel
 
 @Composable
 fun PanNavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     NavHost(
         navController    = navController,
@@ -47,7 +50,16 @@ fun PanNavGraph(navController: NavHostController) {
         }
 
         composable(Screen.Dashboard.route) {
-            DashboardScreen(onNavigateTo = { route -> navController.navigate(route) })
+            DashboardScreen(
+                onNavigateTo = { route -> navController.navigate(route) },
+                onLogout     = {
+                    UserPreferences(context).clearCurrentUserId()
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.Notifications.route) {
@@ -67,6 +79,10 @@ fun PanNavGraph(navController: NavHostController) {
 
         composable(Screen.ClassLocator.route) {
             ClassLocatorScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(onBack = { navController.popBackStack() })
         }
     }
 }

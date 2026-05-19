@@ -41,6 +41,10 @@ class UserPreferences(context: Context) {
 
     fun getCurrentUserId(): String? = prefs.getString("current_user_id", null)
 
+    fun clearCurrentUserId() {
+        prefs.edit().remove("current_user_id").apply()
+    }
+
     // ── Schedule ──────────────────────────────────────────────────────────────
 
     fun saveScheduleImported(userId: String) {
@@ -49,6 +53,35 @@ class UserPreferences(context: Context) {
 
     fun isScheduleImported(userId: String): Boolean =
         prefs.getBoolean("schedule_$userId", false)
+
+    // ── Profile ───────────────────────────────────────────────────────────────
+
+    fun getUserById(userId: String): User? =
+        loadUsers().firstOrNull { it.first.id == userId }?.first
+
+    fun updateUser(updatedUser: User): Result<Unit> {
+        val users = loadUsers()
+        val index = users.indexOfFirst { it.first.id == updatedUser.id }
+        if (index == -1) return Result.failure(Exception("Χρήστης δεν βρέθηκε."))
+        val others = users.filterIndexed { i, _ -> i != index }
+        if (others.any { it.first.email.equals(updatedUser.email, ignoreCase = true) })
+            return Result.failure(Exception("Αυτό το email χρησιμοποιείται ήδη."))
+        if (others.any { it.first.username.equals(updatedUser.username, ignoreCase = true) })
+            return Result.failure(Exception("Αυτό το όνομα χρήστη χρησιμοποιείται ήδη."))
+        val updated = users.mapIndexed { i, pair -> if (i == index) updatedUser to pair.second else pair }
+        saveUsers(updated)
+        return Result.success(Unit)
+    }
+
+    fun updatePassword(userId: String, newPassword: String) {
+        val users = loadUsers()
+        val index = users.indexOfFirst { it.first.id == userId }
+        if (index == -1) return
+        val updated = users.mapIndexed { i, pair ->
+            if (i == index) pair.first to sha256(newPassword) else pair
+        }
+        saveUsers(updated)
+    }
 
     // ── DiplomaPal ────────────────────────────────────────────────────────────
 
