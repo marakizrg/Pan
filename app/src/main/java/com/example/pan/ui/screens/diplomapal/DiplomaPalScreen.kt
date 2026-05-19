@@ -1,5 +1,7 @@
 package com.example.pan.ui.screens.diplomapal
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +17,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pan.model.CourseEntry
 import com.example.pan.viewmodel.DegreeProgress
 import com.example.pan.viewmodel.DiplomaPalViewModel
 
@@ -76,6 +84,13 @@ fun DiplomaPalScreen(
         ) {
             EctsProgressCard(progress)
             StudyGuideButton(onClick = onNavigateToStudyGuide)
+            CoursesCard(
+                courses         = viewModel.courses,
+                checkedCourses  = viewModel.checkedCourses,
+                expanded        = viewModel.coursesExpanded,
+                onToggleExpand  = { viewModel.toggleExpanded() },
+                onToggleCourse  = { viewModel.toggleCourse(it) }
+            )
             CriteriaCard(progress)
         }
     }
@@ -98,8 +113,8 @@ private fun EctsProgressCard(progress: DegreeProgress) {
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    progress  = { progress.progressFraction },
-                    modifier  = Modifier.fillMaxSize(),
+                    progress    = { progress.progressFraction },
+                    modifier    = Modifier.fillMaxSize(),
                     strokeWidth = 14.dp,
                     trackColor  = MaterialTheme.colorScheme.surfaceVariant,
                     strokeCap   = StrokeCap.Round,
@@ -137,6 +152,26 @@ private fun EctsProgressCard(progress: DegreeProgress) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (progress.canGraduate) {
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint     = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text       = "Πληροίς τις προϋποθέσεις πτυχίου!",
+                        style      = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color      = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }
@@ -150,9 +185,140 @@ private fun StudyGuideButton(onClick: () -> Unit) {
             .height(52.dp)
     ) {
         Text(
-            text       = "ΟΔΗΓΟΣ ΣΠΟΥΔΩΝ",
-            fontWeight = FontWeight.Bold,
+            text          = "ΟΔΗΓΟΣ ΣΠΟΥΔΩΝ",
+            fontWeight    = FontWeight.Bold,
             letterSpacing = 1.sp
+        )
+    }
+}
+@Composable
+private fun CoursesCard(
+    courses:        List<CourseEntry>,
+    checkedCourses: Map<String, Boolean>,
+    expanded:       Boolean,
+    onToggleExpand: () -> Unit,
+    onToggleCourse: (String) -> Unit
+) {
+    ElevatedCard(
+        modifier  = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+
+            // Header
+            Row(
+                modifier              = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleExpand() },
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.School,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text       = "ΜΑΘΗΜΑΤΑ",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color      = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Icon(
+                    imageVector        = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Σύμπτυξη" else "Ανάπτυξη",
+                    tint               = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Collapsible content
+            AnimatedVisibility(visible = expanded) {
+                Column {
+                    Spacer(Modifier.height(12.dp))
+
+                    val mandatory = courses.filter { it.type == "mandatory" }
+                    val elective  = courses.filter { it.type == "elective"  }
+
+                    if (mandatory.isNotEmpty()) {
+                        CourseGroupHeader("ΥΠΟΧΡΕΩΤΙΚΑ")
+                        mandatory.forEachIndexed { index, course ->
+                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            CourseRow(
+                                course  = course,
+                                checked = checkedCourses[course.id] ?: false,
+                                onToggle = { onToggleCourse(course.id) }
+                            )
+                        }
+                    }
+
+                    if (elective.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp))
+                        CourseGroupHeader("ΕΠΙΛΟΓΗΣ")
+                        elective.forEachIndexed { index, course ->
+                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            CourseRow(
+                                course   = course,
+                                checked  = checkedCourses[course.id] ?: false,
+                                onToggle = { onToggleCourse(course.id) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CourseGroupHeader(label: String) {
+    Text(
+        text       = label,
+        style      = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        color      = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier   = Modifier.padding(bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun CourseRow(
+    course:  CourseEntry,
+    checked: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier          = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle() }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked         = checked,
+            onCheckedChange = { onToggle() }
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text       = course.name,
+                style      = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text  = course.id,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text(
+            text       = "${course.ects} ECTS",
+            style      = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color      = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -204,16 +370,16 @@ private fun CriteriaItem(count: Int, label: String) {
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(
-            imageVector        = Icons.Default.RadioButtonUnchecked,
+            imageVector        = if (count == 0) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.error,
+            tint               = if (count == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             modifier           = Modifier.size(20.dp)
         )
         Text(
-            text       = "$count",
+            text       = if (count == 0) "✓" else "$count",
             style      = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.ExtraBold,
-            color      = MaterialTheme.colorScheme.primary
+            color      = if (count == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
         )
         Text(
             text  = label,
