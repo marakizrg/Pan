@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.example.pan.ui.screens.auth.LoginScreen
 import com.example.pan.ui.screens.auth.RegisterScreen
 import com.example.pan.ui.screens.classlocator.ClassLocatorScreen
+import com.example.pan.ui.screens.classroomscanner.ClassroomScannerScreen
 import com.example.pan.ui.screens.dashboard.DashboardScreen
 import com.example.pan.ui.screens.diplomapal.DiplomaPalScreen
 import com.example.pan.ui.screens.notifications.NotificationsScreen
@@ -79,6 +80,10 @@ fun PanNavGraph(navController: NavHostController) {
 
         composable(Screen.ClassLocator.route) {
             ClassLocatorScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.ClassroomScanner.route) {
+            ClassroomScannerScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.Profile.route) {

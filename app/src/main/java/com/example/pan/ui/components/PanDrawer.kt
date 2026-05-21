@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ private val mainItems = listOf(
     DrawerItem("Diploma Pal",          Icons.Default.School,                 Screen.DiplomaHelper.route),
     DrawerItem("Οδηγός Σπουδών",      Icons.AutoMirrored.Filled.MenuBook,   Screen.StudyGuide.route),
     DrawerItem("Πλοήγηση σε Κτήρια", Icons.Default.LocationOn,             Screen.ClassLocator.route),
+    DrawerItem("Σάρωση Αίθουσας",    Icons.Default.QrCodeScanner,          Screen.ClassroomScanner.route),
 )
 
 @Composable

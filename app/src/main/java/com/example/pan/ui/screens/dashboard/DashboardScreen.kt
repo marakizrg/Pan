@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -40,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.pan.navigation.Screen
 import com.example.pan.ui.components.PanDrawerContent
 import kotlinx.coroutines.launch
 
@@ -105,6 +107,9 @@ fun DashboardScreen(
                 CreateScheduleCard(onImport = {
                     viewModel.importSchedule()
                 })
+                ClassroomScannerCard(onScan = {
+                    onNavigateTo(Screen.ClassroomScanner.route)
+                })
                 CalendarCard(schedule = schedule)
                 AcademicNotificationsCard()
             }
@@ -145,6 +150,45 @@ private fun CreateScheduleCard(onImport: () -> Unit) {
                     "PRESS HERE TO IMPORT REGISTERED CLASSES",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClassroomScannerCard(onScan: () -> Unit) {
+    ElevatedCard(
+        onClick   = onScan,
+        modifier  = Modifier.fillMaxWidth(),
+        colors    = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier              = Modifier.padding(20.dp),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                Icons.Default.QrCodeScanner,
+                contentDescription = null,
+                modifier = Modifier.size(44.dp),
+                tint     = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Column {
+                Text(
+                    "ΣΑΡΩΣΗ ΑΙΘΟΥΣΑΣ",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color      = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "ΣΑΡΩΣΤΕ ΤΗΝ ΠΙΝΑΚΙΔΑ ΓΙΑ ΝΑ ΔΕΙΤΕ ΤΟ ΠΡΟΓΡΑΜΜΑ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                 )
             }
         }
