@@ -52,27 +52,48 @@ private val buildings = listOf(
 
 // FLOORS
 
-
 private val floors = listOf(
-    "0/Ισόγειο"
+    "Ισόγειο",
+    "Ημιώροφος",
+    "1ος Όροφος"
 )
 
-// GROUND FLOOR ROOMS
-private val groundFloorRooms = listOf(
+// START LOCATIONS
+
+private val startLocations = listOf(
+    "Κεντρική Είσοδος",
+    "Οδός Δεριγνύ",
+    "Οδός Αντωνιάδου",
+    "Οδός Μαυροματαίων",
+    "Οδός Πατησίων"
+)
+
+// CLASSROOMS
+
+private val classrooms = listOf(
+
+    "Δ11",
+
     "Αμφιθέατρο Α",
     "Αμφιθέατρο Β",
-    "Αμφιθέατρο Γ"
+    "Αμφιθέατρο Γ",
+    "Αμφιθέατρο Δεριγνύ",
+    "Αμφιθέατρο Αντωνιάδου"
 )
 
 // DOT POSITIONS
 
 private val dotPositions = mapOf(
 
-    "Αμφιθέατρο Β" to Pair(0.20f, 0.50f),
+    "Δ11" to Pair(0.63f, 0.53f),
 
-    "Αμφιθέατρο Α" to Pair(0.50f, 0.45f),
+    "Αμφιθέατρο Α" to Pair(0.50f, 0.16f),
+    "Αμφιθέατρο Β" to Pair(0.34f, 0.22f),
+    "Αμφιθέατρο Γ" to Pair(0.66f, 0.22f),
 
-    "Αμφιθέατρο Γ" to Pair(0.80f, 0.50f)
+    "Αμφιθέατρο Δεριγνύ" to Pair(0.13f, 0.68f),
+
+    "Αμφιθέατρο Αντωνιάδου" to Pair(0.86f, 0.73f)
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,27 +102,32 @@ fun ClassLocatorScreen(
     onBack: () -> Unit
 ) {
 
-    // BUILDING
     var selectedBuilding by remember {
         mutableStateOf(buildings.first())
+    }
+
+    var selectedFloor by remember {
+        mutableStateOf(floors.first())
+    }
+
+    var selectedStartLocation by remember {
+        mutableStateOf(startLocations.first())
+    }
+
+    var selectedClassroom by remember {
+        mutableStateOf(classrooms.first())
     }
 
     var buildingExpanded by remember {
         mutableStateOf(false)
     }
 
-    // FLOOR
-    var selectedFloor by remember {
-        mutableStateOf(floors.first())
-    }
-
     var floorExpanded by remember {
         mutableStateOf(false)
     }
 
-    // CLASSROOM
-    var selectedClassroom by remember {
-        mutableStateOf(groundFloorRooms.first())
+    var startExpanded by remember {
+        mutableStateOf(false)
     }
 
     var classroomExpanded by remember {
@@ -115,9 +141,8 @@ fun ClassLocatorScreen(
             TopAppBar(
 
                 title = {
-
                     Text(
-                        text = "Πλοήγηση σε Κτήρια",
+                        "Πλοήγηση σε Κτήρια",
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -155,10 +180,12 @@ fun ClassLocatorScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // BUILDING SELECTOR
-            BuildingSelector(
+            SelectorBox(
+                title = "Επιλογή Κτηρίου",
+                label = "Κτήριο",
                 expanded = buildingExpanded,
                 selected = selectedBuilding,
+                items = buildings,
                 onExpandedChange = {
                     buildingExpanded = it
                 },
@@ -168,10 +195,12 @@ fun ClassLocatorScreen(
                 }
             )
 
-            // FLOOR SELECTOR
-            FloorSelector(
+            SelectorBox(
+                title = "Επιλογή Ορόφου",
+                label = "Όροφος",
                 expanded = floorExpanded,
                 selected = selectedFloor,
+                items = floors,
                 onExpandedChange = {
                     floorExpanded = it
                 },
@@ -181,10 +210,27 @@ fun ClassLocatorScreen(
                 }
             )
 
-            // CLASSROOM SELECTOR
-            ClassroomSelector(
+            SelectorBox(
+                title = "Σημείο Εκκίνησης",
+                label = "Αφετηρία",
+                expanded = startExpanded,
+                selected = selectedStartLocation,
+                items = startLocations,
+                onExpandedChange = {
+                    startExpanded = it
+                },
+                onSelect = {
+                    selectedStartLocation = it
+                    startExpanded = false
+                }
+            )
+
+            SelectorBox(
+                title = "Επιλογή Αίθουσας",
+                label = "Αίθουσα",
                 expanded = classroomExpanded,
                 selected = selectedClassroom,
+                items = classrooms,
                 onExpandedChange = {
                     classroomExpanded = it
                 },
@@ -194,31 +240,28 @@ fun ClassLocatorScreen(
                 }
             )
 
-            // LOCATION INFO
             LocationInstructions(
                 selectedBuilding = selectedBuilding,
                 selectedFloor = selectedFloor,
+                selectedStartLocation = selectedStartLocation,
                 selectedClassroom = selectedClassroom
             )
 
-            // FLOOR PLAN
             FloorPlanCard(
-                selectedBuilding = selectedBuilding,
                 selectedClassroom = selectedClassroom
             )
         }
     }
 }
 
-// --------------------------------------------------
-// BUILDING SELECTOR
-// --------------------------------------------------
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BuildingSelector(
+private fun SelectorBox(
+    title: String,
+    label: String,
     expanded: Boolean,
     selected: String,
+    items: List<String>,
     onExpandedChange: (Boolean) -> Unit,
     onSelect: (String) -> Unit
 ) {
@@ -228,7 +271,7 @@ private fun BuildingSelector(
     ) {
 
         Text(
-            text = "Επιλογή Κτηρίου",
+            text = title,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -244,7 +287,7 @@ private fun BuildingSelector(
                 readOnly = true,
 
                 label = {
-                    Text("Κτήριο")
+                    Text(label)
                 },
 
                 trailingIcon = {
@@ -265,15 +308,15 @@ private fun BuildingSelector(
                 }
             ) {
 
-                buildings.forEach { building ->
+                items.forEach { item ->
 
                     DropdownMenuItem(
                         text = {
-                            Text(building)
+                            Text(item)
                         },
 
                         onClick = {
-                            onSelect(building)
+                            onSelect(item)
                         }
                     )
                 }
@@ -281,163 +324,27 @@ private fun BuildingSelector(
         }
     }
 }
-
-// --------------------------------------------------
-// FLOOR SELECTOR
-// --------------------------------------------------
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FloorSelector(
-    expanded: Boolean,
-    selected: String,
-    onExpandedChange: (Boolean) -> Unit,
-    onSelect: (String) -> Unit
-) {
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-
-        Text(
-            text = "Επιλογή Ορόφου",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = onExpandedChange
-        ) {
-
-            OutlinedTextField(
-                value = selected,
-                onValueChange = {},
-                readOnly = true,
-
-                label = {
-                    Text("Όροφος")
-                },
-
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                },
-
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(
-                        ExposedDropdownMenuAnchorType.PrimaryNotEditable
-                    )
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = {
-                    onExpandedChange(false)
-                }
-            ) {
-
-                floors.forEach { floor ->
-
-                    DropdownMenuItem(
-                        text = {
-                            Text(floor)
-                        },
-
-                        onClick = {
-                            onSelect(floor)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-// --------------------------------------------------
-// CLASSROOM SELECTOR
-// --------------------------------------------------
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ClassroomSelector(
-    expanded: Boolean,
-    selected: String,
-    onExpandedChange: (Boolean) -> Unit,
-    onSelect: (String) -> Unit
-) {
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-
-        Text(
-            text = "Επιλογή Αίθουσας",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = onExpandedChange
-        ) {
-
-            OutlinedTextField(
-                value = selected,
-                onValueChange = {},
-                readOnly = true,
-
-                label = {
-                    Text("Αίθουσα")
-                },
-
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                },
-
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(
-                        ExposedDropdownMenuAnchorType.PrimaryNotEditable
-                    )
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = {
-                    onExpandedChange(false)
-                }
-            ) {
-
-                groundFloorRooms.forEach { room ->
-
-                    DropdownMenuItem(
-                        text = {
-                            Text(room)
-                        },
-
-                        onClick = {
-                            onSelect(room)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-// --------------------------------------------------
-// LOCATION INFO
-// --------------------------------------------------
 
 @Composable
 private fun LocationInstructions(
     selectedBuilding: String,
     selectedFloor: String,
+    selectedStartLocation: String,
     selectedClassroom: String
 ) {
 
     val borderColor = MaterialTheme.colorScheme.outline
+
+    val floorInstruction = when {
+
+        selectedClassroom == "Δ11" -> {
+            "Μεταβείτε στον 1ο Όροφο."
+        }
+
+        else -> {
+            "Η αίθουσα βρίσκεται στο Ισόγειο."
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -467,6 +374,20 @@ private fun LocationInstructions(
         )
 
         Text(
+            text = "Αφετηρία: $selectedStartLocation"
+        )
+
+        Text(
+            text = floorInstruction,
+
+            style = MaterialTheme.typography.bodyMedium,
+
+            fontWeight = FontWeight.SemiBold,
+
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
             text = "Η επιλεγμένη αίθουσα εμφανίζεται με μπλε δείκτη στην κάτοψη.",
 
             style = MaterialTheme.typography.bodySmall,
@@ -476,18 +397,13 @@ private fun LocationInstructions(
     }
 }
 
-// --------------------------------------------------
-// FLOOR PLAN CARD
-// --------------------------------------------------
-
 @Composable
 private fun FloorPlanCard(
-    selectedBuilding: String,
     selectedClassroom: String
 ) {
 
-    val outlineColor = MaterialTheme.colorScheme.outline
     val primaryColor = MaterialTheme.colorScheme.primary
+    val outlineColor = MaterialTheme.colorScheme.outline
 
     val dotPos = dotPositions[selectedClassroom]
         ?: Pair(0.50f, 0.50f)
@@ -505,7 +421,7 @@ private fun FloorPlanCard(
         ) {
 
             Text(
-                text = "Κάτοψη Ισογείου - $selectedBuilding",
+                text = "Κάτοψη Μαράσλειου Μεγάρου",
 
                 style = MaterialTheme.typography.titleSmall,
 
@@ -519,13 +435,13 @@ private fun FloorPlanCard(
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(320.dp)
+                    .height(450.dp)
             ) {
 
                 val w = size.width
                 val h = size.height
 
-                val thick = Stroke(3.dp.toPx())
+                val thick = Stroke(2.5.dp.toPx())
                 val thin = Stroke(1.5.dp.toPx())
 
                 val rc = CornerRadius(4.dp.toPx())
@@ -556,16 +472,44 @@ private fun FloorPlanCard(
                     )
                 }
 
-                // LEFT AMPHITHEATER
-                room(0.05f, 0.18f, 0.30f, 0.78f)
+                // OUTER BUILDING
+                drawRoundRect(
+                    color = outlineColor,
 
-                // CENTER AMPHITHEATER
-                room(0.36f, 0.08f, 0.64f, 0.82f)
+                    topLeft = Offset(
+                        w * 0.02f,
+                        h * 0.03f
+                    ),
 
-                // RIGHT AMPHITHEATER
-                room(0.70f, 0.18f, 0.95f, 0.78f)
+                    size = Size(
+                        w * 0.96f,
+                        h * 0.94f
+                    ),
 
-                // DOT
+                    cornerRadius = CornerRadius(8.dp.toPx()),
+
+                    style = thick
+                )
+
+                // ΑΜΦΙΘΕΑΤΡΟ Β
+                room(0.28f, 0.08f, 0.40f, 0.28f)
+
+                // ΑΜΦΙΘΕΑΤΡΟ Α
+                room(0.43f, 0.05f, 0.57f, 0.28f)
+
+                // ΑΜΦΙΘΕΑΤΡΟ Γ
+                room(0.60f, 0.08f, 0.72f, 0.28f)
+
+                // Δ11
+                room(0.57f, 0.46f, 0.69f, 0.62f)
+
+                // ΑΜΦΙΘΕΑΤΡΟ ΔΕΡΙΓΝΥ
+                room(0.03f, 0.52f, 0.22f, 0.84f)
+
+                // ΑΜΦΙΘΕΑΤΡΟ ΑΝΤΩΝΙΑΔΟΥ
+                room(0.78f, 0.55f, 0.95f, 0.90f)
+
+                // LOCATION DOT
                 val dotX = w * dotPos.first
                 val dotY = h * dotPos.second
 
@@ -588,8 +532,6 @@ private fun FloorPlanCard(
         }
     }
 }
-
-// DASHED BORDER
 
 private fun Modifier.dashedBorder(
     color: Color,
