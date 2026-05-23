@@ -82,7 +82,7 @@ fun DiplomaPalScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            EctsProgressCard(progress)
+            ECTSProgressCard(progress)
             StudyGuideButton(onClick = onNavigateToStudyGuide)
             CoursesCard(
                 courses         = viewModel.courses,
@@ -97,7 +97,7 @@ fun DiplomaPalScreen(
 }
 
 @Composable
-private fun EctsProgressCard(progress: DegreeProgress) {
+private fun ECTSProgressCard(progress: DegreeProgress) {
     ElevatedCard(
         modifier  = Modifier.fillMaxWidth(),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
@@ -121,13 +121,13 @@ private fun EctsProgressCard(progress: DegreeProgress) {
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text       = "${progress.acquiredEcts}",
+                        text       = "${progress.acquiredECTS}",
                         style      = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color      = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text  = "/ ${progress.requiredEcts}",
+                        text  = "/ ${progress.requiredECTS}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -148,7 +148,7 @@ private fun EctsProgressCard(progress: DegreeProgress) {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text  = "Απομένουν ${progress.remainingEcts} ECTS ακόμη",
+                text  = "Απομένουν ${progress.remainingECTS} ECTS ακόμη",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -205,7 +205,6 @@ private fun CoursesCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
 
-            // Header
             Row(
                 modifier              = Modifier
                     .fillMaxWidth()
@@ -236,13 +235,13 @@ private fun CoursesCard(
                 )
             }
 
-            // Collapsible content
             AnimatedVisibility(visible = expanded) {
                 Column {
                     Spacer(Modifier.height(12.dp))
 
                     val mandatory = courses.filter { it.type == "mandatory" }
                     val elective  = courses.filter { it.type == "elective"  }
+                    val electiveCore = courses.filter { it.type == "elective-core" }
 
                     if (mandatory.isNotEmpty()) {
                         CourseGroupHeader("ΥΠΟΧΡΕΩΤΙΚΑ")
@@ -264,6 +263,19 @@ private fun CoursesCard(
                             CourseRow(
                                 course   = course,
                                 checked  = checkedCourses[course.id] ?: false,
+                                onToggle = { onToggleCourse(course.id) }
+                            )
+                        }
+                    }
+
+                    if (electiveCore.isNotEmpty()) {
+                        Spacer(Modifier.height(24.dp))
+                        CourseGroupHeader("ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ")
+                        electiveCore.forEachIndexed { index, course ->
+                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            CourseRow(
+                                course  = course,
+                                checked = checkedCourses[course.id] ?: false,
                                 onToggle = { onToggleCourse(course.id) }
                             )
                         }
@@ -315,7 +327,7 @@ private fun CourseRow(
             )
         }
         Text(
-            text       = "${course.ects} ECTS",
+            text       = "${course.ECTS} ECTS",
             style      = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color      = MaterialTheme.colorScheme.primary
@@ -340,7 +352,7 @@ private fun CriteriaCard(progress: DegreeProgress) {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text       = "ΥΠΟΛΟΓΙΣΜΟΣ ΜΕ ΒΑΣΗ ΤΑ ΚΡΙΤΗΡΙΑ ΠΤΥΧΙΟΥ",
+                    text       = "ΥΠΟΛΟΓΙΣΜΟΣ ΜΕ ΒΑΣΗ ΤΙΣ ΠΡΟΫΠΟΘΕΣΕΙΣ ΑΠΟΚΤΗΣΗΣ ΠΤΥΧΙΟΥ",
                     style      = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color      = MaterialTheme.colorScheme.primary
@@ -356,33 +368,61 @@ private fun CriteriaCard(progress: DegreeProgress) {
                 color      = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(12.dp))
-            CriteriaItem(count = progress.missingMandatory, label = "ΥΠΟΧΡΕΩΤΙΚΑ")
+
+            // Επίπεδο 1: Επιτυχία στα 22 υποχρεωτικά μαθήματα πυρήνα του προγράμματος σπουδών.
+            CriteriaItem(
+                missing = progress.missingMandatory,
+                label   = "ΥΠΟΧΡΕΩΤΙΚΑ ΜΑΘΗΜΑΤΑ (22)"
+            )
             Spacer(Modifier.height(12.dp))
-            CriteriaItem(count = progress.missingElective,  label = "ΕΠΙΛΟΓΗΣ")
+
+            // Επίπεδο 2: Επιτυχία σε τουλάχιστον 4 από τα μαθήματα επιλογής πυρήνα του προγράμματος σπουδών.
+            CriteriaItem(
+                missing = progress.missingElectiveCore,
+                label   = "ΜΑΘΗΜΑΤΑ ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ (≥4)"
+            )
+            Spacer(Modifier.height(12.dp))
+
+            // Επίπεδο 3: Λήψη τουλάχιστον 64 μονάδων ECTS προερχόμενες από μαθήματα επιλογής πυρήνα και επιλογής
+            CriteriaItem(
+                missing      = progress.missingElectiveECTS.toInt(),
+                label        = "ECTS ΑΠΟ ΜΑΘΗΜΑΤΑ ΕΠΙΛΟΓΗΣ ΚΑΙ ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ (≥64)",
+                customSuffix = if (progress.missingElectiveECTS > 0)
+                    " (απομένουν ${progress.missingElectiveECTS} ECTS)"
+                else null
+            )
         }
     }
 }
 
 @Composable
-private fun CriteriaItem(count: Int, label: String) {
+private fun CriteriaItem(
+    missing:      Int,
+    label:        String,
+    customSuffix: String? = null
+) {
+    val met = missing == 0
     Row(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(
-            imageVector        = if (count == 0) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+            imageVector        = if (met) Icons.Default.CheckCircle
+            else     Icons.Default.RadioButtonUnchecked,
             contentDescription = null,
-            tint               = if (count == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            tint               = if (met) MaterialTheme.colorScheme.primary
+            else     MaterialTheme.colorScheme.error,
             modifier           = Modifier.size(20.dp)
         )
         Text(
-            text       = if (count == 0) "✓" else "$count",
+            text       = if (met) "✓" else "$missing",
             style      = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.ExtraBold,
-            color      = if (count == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            color      = if (met) MaterialTheme.colorScheme.primary
+            else     MaterialTheme.colorScheme.error
         )
         Text(
-            text  = label,
+            text  = label + (customSuffix ?: ""),
             style = MaterialTheme.typography.bodyLarge,
         )
     }

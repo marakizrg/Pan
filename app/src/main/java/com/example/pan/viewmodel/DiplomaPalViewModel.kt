@@ -11,14 +11,15 @@ import com.example.pan.model.CourseEntry
 import com.example.pan.model.loadCoursesFromAssets
 
 data class DegreeProgress(
-    val acquiredEcts:     Double  = 0.0,
-    val requiredEcts:     Double  = 240.0,
-    val missingMandatory: Int     = 0,
-    val missingElective:  Int     = 0,
-    val progressFraction: Float   = 0f,
-    val progressPercent:  Int     = 0,
-    val remainingEcts:    Double  = 240.0,
-    val canGraduate:      Boolean = false
+    val acquiredECTS:        Double  = 0.0,
+    val requiredECTS:        Double  = 240.0,
+    val missingMandatory:    Int     = 0,
+    val missingElectiveCore: Int     = 0,
+    val missingElectiveECTS: Double  = 0.0,
+    val progressFraction:    Float   = 0f,
+    val progressPercent:     Int     = 0,
+    val remainingECTS:       Double  = 240.0,
+    val canGraduate:         Boolean = false
 )
 
 class DiplomaPalViewModel(application: Application) : AndroidViewModel(application) {
@@ -62,28 +63,40 @@ class DiplomaPalViewModel(application: Application) : AndroidViewModel(applicati
     private fun recalculate() {
         val completed = courses.filter { checkedCourses[it.id] == true }
 
-        val acquiredEcts       = completed.sumOf { it.ects }
-        val requiredEcts       = 240.0
-        val completedMandatory = completed.count { it.type == "mandatory" }
-        val totalMandatory     = courses.count   { it.type == "mandatory" }
-        val completedElective  = completed.count { it.type == "elective" }
-        val requiredElective   = 5
+        val acquiredECTS  = completed.sumOf { it.ECTS }
+        val requiredECTS  = 240.0
 
-        val missingMandatory = maxOf(0, totalMandatory  - completedMandatory)
-        val missingElective  = maxOf(0, requiredElective - completedElective)
-        val remainingEcts    = maxOf(0.0, requiredEcts - acquiredEcts)
-        val fraction         = (acquiredEcts / requiredEcts).toFloat().coerceIn(0f, 1f)
-        val canGraduate      = missingMandatory == 0 && missingElective == 0 && acquiredEcts >= requiredEcts
+        val totalMandatory     = courses.count   { it.type == "mandatory" }
+        val completedMandatory = completed.count { it.type == "mandatory" }
+        val missingMandatory   = maxOf(0, totalMandatory - completedMandatory)
+
+        val requiredElectiveCore   = 4
+        val completedElectiveCore  = completed.count { it.type == "elective-core" }
+        val missingElectiveCore    = maxOf(0, requiredElectiveCore - completedElectiveCore)
+
+        val requiredElectiveECTS  = 64.0
+        val acquiredElectiveECTS  = completed
+            .filter { it.type == "elective" || it.type == "elective-core" }
+            .sumOf { it.ECTS }
+        val missingElectiveECTS   = maxOf(0.0, requiredElectiveECTS - acquiredElectiveECTS)
+
+        val remainingECTS = maxOf(0.0, requiredECTS - acquiredECTS)
+        val fraction      = (acquiredECTS / requiredECTS).toFloat().coerceIn(0f, 1f)
+        val canGraduate   = missingMandatory   == 0 &&
+                missingElectiveCore == 0 &&
+                missingElectiveECTS == 0.0 &&
+                acquiredECTS >= requiredECTS
 
         progress = DegreeProgress(
-            acquiredEcts     = acquiredEcts,
-            requiredEcts     = requiredEcts,
-            missingMandatory = missingMandatory,
-            missingElective  = missingElective,
-            progressFraction = fraction,
-            progressPercent  = (fraction * 100).toInt(),
-            remainingEcts    = remainingEcts,
-            canGraduate      = canGraduate
+            acquiredECTS        = acquiredECTS,
+            requiredECTS        = requiredECTS,
+            missingMandatory    = missingMandatory,
+            missingElectiveCore = missingElectiveCore,
+            missingElectiveECTS = missingElectiveECTS,
+            progressFraction    = fraction,
+            progressPercent     = (fraction * 100).toInt(),
+            remainingECTS       = remainingECTS,
+            canGraduate         = canGraduate
         )
     }
 }

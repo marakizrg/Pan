@@ -3,7 +3,7 @@ package com.example.pan.model
 data class CourseEntry(
     val id:   String,
     val name: String,
-    val ects: Double,
+    val ECTS: Double,
     val type: String
 )
 
@@ -15,7 +15,7 @@ fun loadCoursesFromAssets(context: android.content.Context): List<CourseEntry> {
         CourseEntry(
             id   = obj.getString("id"),
             name = obj.getString("name"),
-            ects = obj.getDouble("ects"),
+            ECTS = obj.getDouble("ECTS"),
             type = obj.getString("type")
         )
     }
