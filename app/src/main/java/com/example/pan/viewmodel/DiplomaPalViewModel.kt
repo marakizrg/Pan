@@ -31,8 +31,7 @@ class DiplomaPalViewModel(application: Application) : AndroidViewModel(applicati
 
     val checkedCourses = mutableStateMapOf<String, Boolean>()
 
-    var coursesExpanded by mutableStateOf(false)
-        private set
+    val expandedCategories = mutableStateMapOf<String, Boolean>()
 
     var progress by mutableStateOf(DegreeProgress())
         private set
@@ -44,11 +43,18 @@ class DiplomaPalViewModel(application: Application) : AndroidViewModel(applicati
             val saved = userPrefs.loadCheckedCourses(userId)
             saved.forEach { checkedCourses[it] = true }
         }
+        
+        // Initialize expanded categories
+        expandedCategories["mandatory"] = false
+        expandedCategories["elective-core"] = false
+        expandedCategories["elective"] = false
+        expandedCategories["free"] = false
+        
         recalculate()
     }
 
-    fun toggleExpanded() {
-        coursesExpanded = !coursesExpanded
+    fun toggleCategory(category: String) {
+        expandedCategories[category] = !(expandedCategories[category] ?: false)
     }
 
     fun toggleCourse(id: String) {
@@ -71,13 +77,21 @@ class DiplomaPalViewModel(application: Application) : AndroidViewModel(applicati
         val missingMandatory   = maxOf(0, totalMandatory - completedMandatory)
 
         val requiredElectiveCore   = 4
-        val completedElectiveCore  = completed.count { it.type == "elective-core" }
-        val missingElectiveCore    = maxOf(0, requiredElectiveCore - completedElectiveCore)
+        val electiveCoreCompleted  = completed.filter { it.type == "elective-core" }.sortedBy { it.ECTS }
+        val missingElectiveCore    = maxOf(0, requiredElectiveCore - electiveCoreCompleted.size)
 
         val requiredElectiveECTS  = 64.0
+        // Only elective-core courses beyond the first 4 contribute to the 64 ECTS requirement
+        val electiveCoreSurplusECTS = if (electiveCoreCompleted.size > 4) {
+            electiveCoreCompleted.drop(4).sumOf { it.ECTS }
+        } else {
+            0.0
+        }
+        
         val acquiredElectiveECTS  = completed
-            .filter { it.type == "elective" || it.type == "elective-core" }
-            .sumOf { it.ECTS }
+            .filter { it.type == "elective" || it.type == "free" }
+            .sumOf { it.ECTS } + electiveCoreSurplusECTS
+
         val missingElectiveECTS   = maxOf(0.0, requiredElectiveECTS - acquiredElectiveECTS)
 
         val remainingECTS = maxOf(0.0, requiredECTS - acquiredECTS)

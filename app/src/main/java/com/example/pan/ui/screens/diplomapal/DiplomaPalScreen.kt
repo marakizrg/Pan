@@ -85,11 +85,11 @@ fun DiplomaPalScreen(
             ECTSProgressCard(progress)
             StudyGuideButton(onClick = onNavigateToStudyGuide)
             CoursesCard(
-                courses         = viewModel.courses,
-                checkedCourses  = viewModel.checkedCourses,
-                expanded        = viewModel.coursesExpanded,
-                onToggleExpand  = { viewModel.toggleExpanded() },
-                onToggleCourse  = { viewModel.toggleCourse(it) }
+                courses            = viewModel.courses,
+                checkedCourses     = viewModel.checkedCourses,
+                expandedCategories = viewModel.expandedCategories,
+                onToggleCategory   = { viewModel.toggleCategory(it) },
+                onToggleCourse     = { viewModel.toggleCourse(it) }
             )
             CriteriaCard(progress)
         }
@@ -193,11 +193,11 @@ private fun StudyGuideButton(onClick: () -> Unit) {
 }
 @Composable
 private fun CoursesCard(
-    courses:        List<CourseEntry>,
-    checkedCourses: Map<String, Boolean>,
-    expanded:       Boolean,
-    onToggleExpand: () -> Unit,
-    onToggleCourse: (String) -> Unit
+    courses:            List<CourseEntry>,
+    checkedCourses:     Map<String, Boolean>,
+    expandedCategories: Map<String, Boolean>,
+    onToggleCategory:   (String) -> Unit,
+    onToggleCourse:     (String) -> Unit
 ) {
     ElevatedCard(
         modifier  = Modifier.fillMaxWidth(),
@@ -206,95 +206,120 @@ private fun CoursesCard(
         Column(modifier = Modifier.padding(20.dp)) {
 
             Row(
-                modifier              = Modifier
-                    .fillMaxWidth()
-                    .clickable { onToggleExpand() },
                 verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier              = Modifier.padding(bottom = 12.dp)
             ) {
-                Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.School,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text       = "ΜΑΘΗΜΑΤΑ",
-                        style      = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color      = MaterialTheme.colorScheme.primary
-                    )
-                }
                 Icon(
-                    imageVector        = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Σύμπτυξη" else "Ανάπτυξη",
-                    tint               = MaterialTheme.colorScheme.onSurfaceVariant
+                    Icons.Default.School,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text       = "ΜΑΘΗΜΑΤΑ",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color      = MaterialTheme.colorScheme.primary
                 )
             }
 
-            AnimatedVisibility(visible = expanded) {
-                Column {
-                    Spacer(Modifier.height(12.dp))
+            CourseCategorySection(
+                label          = "ΥΠΟΧΡΕΩΤΙΚΑ",
+                courses        = courses.filter { it.type == "mandatory" },
+                checkedCourses = checkedCourses,
+                expanded       = expandedCategories["mandatory"] ?: false,
+                onToggle       = { onToggleCategory("mandatory") },
+                onCourseToggle = onToggleCourse
+            )
 
-                    val mandatory = courses.filter { it.type == "mandatory" }
-                    val elective  = courses.filter { it.type == "elective"  }
-                    val electiveCore = courses.filter { it.type == "elective-core" }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    if (mandatory.isNotEmpty()) {
-                        CourseGroupHeader("ΥΠΟΧΡΕΩΤΙΚΑ")
-                        mandatory.forEachIndexed { index, course ->
-                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                            CourseRow(
-                                course  = course,
-                                checked = checkedCourses[course.id] ?: false,
-                                onToggle = { onToggleCourse(course.id) }
-                            )
-                        }
-                    }
+            CourseCategorySection(
+                label          = "ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ",
+                courses        = courses.filter { it.type == "elective-core" },
+                checkedCourses = checkedCourses,
+                expanded       = expandedCategories["elective-core"] ?: false,
+                onToggle       = { onToggleCategory("elective-core") },
+                onCourseToggle = onToggleCourse
+            )
 
-                    if (elective.isNotEmpty()) {
-                        Spacer(Modifier.height(12.dp))
-                        CourseGroupHeader("ΕΠΙΛΟΓΗΣ")
-                        elective.forEachIndexed { index, course ->
-                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                            CourseRow(
-                                course   = course,
-                                checked  = checkedCourses[course.id] ?: false,
-                                onToggle = { onToggleCourse(course.id) }
-                            )
-                        }
-                    }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    if (electiveCore.isNotEmpty()) {
-                        Spacer(Modifier.height(24.dp))
-                        CourseGroupHeader("ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ")
-                        electiveCore.forEachIndexed { index, course ->
-                            if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                            CourseRow(
-                                course  = course,
-                                checked = checkedCourses[course.id] ?: false,
-                                onToggle = { onToggleCourse(course.id) }
-                            )
-                        }
-                    }
-                }
-            }
+            CourseCategorySection(
+                label          = "ΕΠΙΛΟΓΗΣ",
+                courses        = courses.filter { it.type == "elective" },
+                checkedCourses = checkedCourses,
+                expanded       = expandedCategories["elective"] ?: false,
+                onToggle       = { onToggleCategory("elective") },
+                onCourseToggle = onToggleCourse
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            CourseCategorySection(
+                label          = "ΕΛΕΥΘΕΡΗΣ ΕΠΙΛΟΓΗΣ",
+                courses        = courses.filter { it.type == "free" },
+                checkedCourses = checkedCourses,
+                expanded       = expandedCategories["free"] ?: false,
+                onToggle       = { onToggleCategory("free") },
+                onCourseToggle = onToggleCourse
+            )
         }
     }
 }
 
 @Composable
-private fun CourseGroupHeader(label: String) {
-    Text(
-        text       = label,
-        style      = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold,
-        color      = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier   = Modifier.padding(bottom = 8.dp)
-    )
+private fun CourseCategorySection(
+    label:          String,
+    courses:        List<CourseEntry>,
+    checkedCourses: Map<String, Boolean>,
+    expanded:       Boolean,
+    onToggle:       () -> Unit,
+    onCourseToggle: (String) -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggle() }
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text       = label,
+                style      = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color      = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Icon(
+                imageVector        = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (expanded) "Σύμπτυξη" else "Ανάπτυξη",
+                tint               = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        AnimatedVisibility(visible = expanded) {
+            Column {
+                if (courses.isEmpty()) {
+                    Text(
+                        text     = "Δεν υπάρχουν μαθήματα σε αυτή την κατηγορία.",
+                        style    = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                } else {
+                    courses.forEachIndexed { index, course ->
+                        if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        CourseRow(
+                            course   = course,
+                            checked  = checkedCourses[course.id] ?: false,
+                            onToggle = { onCourseToggle(course.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -383,10 +408,10 @@ private fun CriteriaCard(progress: DegreeProgress) {
             )
             Spacer(Modifier.height(12.dp))
 
-            // Επίπεδο 3: Λήψη τουλάχιστον 64 μονάδων ECTS προερχόμενες από μαθήματα επιλογής πυρήνα και επιλογής
+            // Επίπεδο 3: Λήψη τουλάχιστον 64 μονάδων ECTS προερχόμενες από μαθήματα επιλογής πυρήνα, επιλογής και ελεύθερης επιλογής
             CriteriaItem(
                 missing      = progress.missingElectiveECTS.toInt(),
-                label        = "ECTS ΑΠΟ ΜΑΘΗΜΑΤΑ ΕΠΙΛΟΓΗΣ ΚΑΙ ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ (≥64)",
+                label        = "ECTS ΑΠΟ ΜΑΘΗΜΑΤΑ ΕΠΙΛΟΓΗΣ / ΕΠΙΛΟΓΗΣ ΠΥΡΗΝΑ / ΕΛΕΥΘΕΡΗΣ ΕΠΙΛΟΓΗΣ",
                 customSuffix = if (progress.missingElectiveECTS > 0)
                     " (απομένουν ${progress.missingElectiveECTS} ECTS)"
                 else null
