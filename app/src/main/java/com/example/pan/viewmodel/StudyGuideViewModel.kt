@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.pan.data.model.Course
 import com.example.pan.data.model.mockCourses
+import com.example.pan.util.SearchUtils
 
 class StudyGuideViewModel : ViewModel() {
 
@@ -14,8 +15,11 @@ class StudyGuideViewModel : ViewModel() {
 
     val filteredCourses: List<Course>
         get() = if (searchQuery.isBlank()) mockCourses
-                else mockCourses.filter {
-                    it.title.contains(searchQuery, ignoreCase = true)
+                else {
+                    val normalizedQuery = SearchUtils.normalizeForSearch(searchQuery)
+                    mockCourses.filter {
+                        SearchUtils.normalizeForSearch(it.title).contains(normalizedQuery)
+                    }
                 }
 
     fun onQueryChange(query: String) { searchQuery = query }

@@ -22,20 +22,50 @@ object ClassroomMatcher {
     /**
      * Attempts to match a raw OCR string to a known classroom identifier.
      * Returns the canonical room name, or null if no match.
-     * Latin A (U+0041) is normalised to Greek Α (U+0391) before matching
-     * so that "A21" and "Α21" both resolve to "Α21".
+     * Maps common Latin homoglyphs to Greek characters to support "reading" 
+     * Greek signs using a Latin-based OCR.
      */
     fun normalize(raw: String): String? {
-        val trimmed   = raw.trim()
-        val normalized = trimmed.replace('A', 'Α')   // U+0041 → U+0391
+        val trimmed = raw.trim().uppercase()
+        
+        // Map Latin homoglyphs to Greek for better matching of Greek signs
+        val greekified = trimmed
+            .replace('A', 'Α')
+            .replace('B', 'Β')
+            .replace('E', 'Ε')
+            .replace('Z', 'Ζ')
+            .replace('H', 'Η')
+            .replace('I', 'Ι')
+            .replace('K', 'Κ')
+            .replace('M', 'Μ')
+            .replace('N', 'Ν')
+            .replace('O', 'Ο')
+            .replace('P', 'Ρ')
+            .replace('T', 'Τ')
+            .replace('Y', 'Υ')
+            .replace('X', 'Χ')
 
-        if (alphaSeriesRegex.matches(normalized)) return normalized
-        if (deltaSeriesRegex.matches(trimmed))    return trimmed
+        if (alphaSeriesRegex.matches(greekified)) return greekified
+        if (deltaSeriesRegex.matches(greekified)) return greekified
 
+        // Check for fixed rooms (case insensitive)
         val lower = trimmed.lowercase()
-        val idx   = fixedRoomsLower.indexOf(lower)
+        val idx = fixedRoomsLower.indexOfFirst { it == lower || normalizeGreek(it) == normalizeGreek(lower) }
         if (idx >= 0) return fixedRooms[idx]
 
         return null
+    }
+
+    private fun normalizeGreek(text: String): String {
+        return text.lowercase()
+            .replace('ά', 'α')
+            .replace('έ', 'ε')
+            .replace('ή', 'η')
+            .replace('ί', 'ι')
+            .replace('ό', 'ο')
+            .replace('ύ', 'υ')
+            .replace('ώ', 'ω')
+            .replace('ϊ', 'ι')
+            .replace('ϋ', 'υ')
     }
 }
