@@ -111,7 +111,6 @@ fun DashboardScreen(
                     onNavigateTo(Screen.ClassroomScanner.route)
                 })
                 CalendarCard(schedule = schedule)
-                AcademicNotificationsCard()
             }
         }
     }
@@ -140,14 +139,14 @@ private fun CreateScheduleCard(onImport: () -> Unit) {
             )
             Column {
                 Text(
-                    "CREATE SCHEDULE",
+                    "ΔΗΜΙΟΥΡΓΙΑ ΠΡΟΓΡΑΜΜΑΤΟΣ",
                     style      = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color      = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "PRESS HERE TO IMPORT REGISTERED CLASSES",
+                    "ΠΑΤΗΣΤΕ ΕΔΩ ΓΙΑ ΝΑ ΕΙΣΑΧΘΟΥΝ ΤΑ ΜΑΘΗΜΑΤΑ",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 )
@@ -212,7 +211,7 @@ private fun CalendarCard(schedule: List<ScheduleEntry>) {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "CALENDAR",
+                    "ΗΜΕΡΟΛΟΓΙΟ",
                     style      = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color      = MaterialTheme.colorScheme.primary
@@ -220,14 +219,14 @@ private fun CalendarCard(schedule: List<ScheduleEntry>) {
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                "SHOWS DAILY PLAN ON PRESS AND NOTIFIES WHEN ASSIGNMENTS ARE DUE",
+                "ΕΒΔΟΜΑΔΙΑΙΟ ΠΡΟΓΡΑΜΜΑ",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(16.dp))
             if (schedule.isEmpty()) {
                 Text(
-                    "No classes imported yet.",
+                    "Δεν υπάρχουν μαθήματα.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -257,58 +256,3 @@ private fun CalendarCard(schedule: List<ScheduleEntry>) {
     }
 }
 
-private val mockAnnouncements = listOf(
-    "Αναπλήρωση μαθήματος Αλγορίθμων την Παρασκευή 16/05 στην Αίθουσα Γ1." to "Γραμματεία",
-    "Υπενθύμιση: Προθεσμία παράδοσης εργασίας Προγραμματισμού η 20/05."     to "Τμήμα ΟΠΕ",
-)
-
-@Composable
-private fun AcademicNotificationsCard() {
-    ElevatedCard(
-        modifier  = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    Icons.Default.Notifications,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    "ACADEMIC NOTIFICATIONS",
-                    style      = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color      = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-            mockAnnouncements.forEachIndexed { index, (message, source) ->
-                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment     = Alignment.Top
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        tint     = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Column {
-                        Text(message, style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            source,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
