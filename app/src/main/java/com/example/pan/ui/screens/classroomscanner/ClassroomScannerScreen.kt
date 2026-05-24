@@ -343,11 +343,13 @@ private fun CameraPreviewView(
                     recognizer.process(inputImage)
                         .addOnSuccessListener(ContextCompat.getMainExecutor(ctx)) { result ->
                             val texts = buildList {
+                                // Add the full combined text first to catch split blocks (like "ΑΜΦΙΘΕΑΤΡΟ" and "Β")
+                                if (result.text.isNotBlank()) add(result.text)
+                                
                                 for (block in result.textBlocks) {
                                     add(block.text)
                                     for (line in block.lines) {
                                         add(line.text)
-                                        for (elem in line.elements) add(elem.text)
                                     }
                                 }
                             }

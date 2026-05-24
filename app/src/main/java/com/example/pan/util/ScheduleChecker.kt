@@ -35,12 +35,12 @@ object ScheduleChecker {
         val now      = Calendar.getInstance()
         val todayKey = dayFromCalendar[now.get(Calendar.DAY_OF_WEEK)] ?: return NO_CLASS_MSG
 
-        // Normalise Latin A → Greek Α for robust comparison with schedule data
-        val normRoom = room.replace('A', 'Α')
+        // Use canonical IDs for robust comparison between OCR results and schedule data
+        val roomID = ClassroomMatcher.getCanonicalId(room)
 
         val todayEntries = schedule.filter { entry ->
             entry.day.equals(todayKey, ignoreCase = true) &&
-            entry.room.replace('A', 'Α').equals(normRoom, ignoreCase = true)
+            ClassroomMatcher.getCanonicalId(entry.room) == roomID
         }
 
         if (todayEntries.isEmpty()) return NO_CLASS_MSG

@@ -45,7 +45,7 @@ class ClassroomScannerViewModel(application: Application) : AndroidViewModel(app
             lastCandidate = match
         }
 
-        if (consecutiveCount >= 3 && match != null) {
+        if (consecutiveCount >= 2 && match != null) {
             detectedRoom    = match
             scheduleMessage = ScheduleChecker.checkRoom(match, schedule)
             isScanning      = false

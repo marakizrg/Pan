@@ -4,30 +4,19 @@ object ClassroomMatcher {
 
     // Α-series: Greek Α (U+0391) or Latin A (U+0041) followed by 1–3 digits
     private val alphaSeriesRegex = Regex("^[AΑ]\\d{1,3}$")
-
     // Δ-series: Greek Δ (U+0394) followed by 1–3 digits
     private val deltaSeriesRegex = Regex("^Δ\\d{1,3}$")
 
-    // Canonical spellings for fixed-name rooms (used for display and comparison)
-    private val fixedRooms = listOf(
-        "CSLab",
-        "Αμφιθέατρο Α",
-        "Αμφιθέατρο Β",
-        "Αμφιθέατρο Γ",
-        "Αμφιθέατρο Κιντής",
-        "Αίθουσα Χ"
-    )
-    private val fixedRoomsLower = fixedRooms.map { it.lowercase() }
-
     /**
      * Attempts to match a raw OCR string to a known classroom identifier.
-     * Returns the canonical room name, or null if no match.
-     * Maps common Latin homoglyphs to Greek characters to support "reading" 
-     * Greek signs using a Latin-based OCR.
+     * Maps common Latin homoglyphs to Greek and handles "Αμφιθέατρο" fuzzy matching
+     * to compensate for Latin-only OCR limitations on Greek signs.
      */
     fun normalize(raw: String): String? {
         val trimmed = raw.trim().uppercase()
-        
+            .replace("\n", " ")
+            .replace(Regex("\\s+"), " ")
+
         // Map Latin homoglyphs to Greek for better matching of Greek signs
         val greekified = trimmed
             .replace('A', 'Α')
@@ -45,27 +34,60 @@ object ClassroomMatcher {
             .replace('Y', 'Υ')
             .replace('X', 'Χ')
 
+        // Fuzzy match for "Αμφιθέατρο" variations
+        // We look for parts of the word since Φ/Θ are often missed by Latin OCR
+        if (greekified.contains(Regex("ΑΜ.*ΑΤΡΟ")) || greekified.contains("ΑΜΦ") || greekified.contains("ΕΑΤΡΟ")) {
+            // Check for suffix A/B/C/G or common digit misreads (4 for A, 8 for B)
+            if (greekified.endsWith("Α") || greekified.contains("Α ") || greekified.contains(" 4") || greekified.endsWith("4")) return "Αμφιθέατρο Α"
+            if (greekified.endsWith("Β") || greekified.contains("Β ") || greekified.contains(" 8") || greekified.endsWith("8") || greekified.contains(" B")) return "Αμφιθέατρο Β"
+            if (greekified.endsWith("Γ") || greekified.contains("Γ ") || greekified.endsWith("G") || greekified.contains(" G")) return "Αμφιθέατρο Γ"
+            if (greekified.contains("ΚΙΝΤΗΣ") || greekified.contains("KINTH")) return "Αμφιθέατρο Κιντής"
+        }
+
         if (alphaSeriesRegex.matches(greekified)) return greekified
         if (deltaSeriesRegex.matches(greekified)) return greekified
+        
+        // Handle explicit "ΑΜΦΙΘΕΑΤΡΟ X" if it was read perfectly
+        if (greekified.startsWith("ΑΜΦΙΘΕΑΤΡΟ")) {
+            val suffix = greekified.removePrefix("ΑΜΦΙΘΕΑΤΡΟ").trim()
+            return when (suffix) {
+                "Α", "4" -> "Αμφιθέατρο Α"
+                "Β", "8" -> "Αμφιθέατρο Β"
+                "Γ", "G" -> "Αμφιθέατρο Γ"
+                "ΚΙΝΤΗΣ" -> "Αμφιθέατρο Κιντής"
+                else -> "Αμφιθέατρο $suffix"
+            }
+        }
 
-        // Check for fixed rooms (case insensitive)
-        val lower = trimmed.lowercase()
-        val idx = fixedRoomsLower.indexOfFirst { it == lower || normalizeGreek(it) == normalizeGreek(lower) }
-        if (idx >= 0) return fixedRooms[idx]
+        // Fixed room cases
+        if (greekified == "CSLAB" || greekified == "CSLAB1") return "CSLab"
+        if (greekified == "X" || greekified == "ΑΙΘΟΥΣΑ Χ" || greekified == "ΑΙΘΟΥΣΑ X") return "Αίθουσα Χ"
 
         return null
     }
 
-    private fun normalizeGreek(text: String): String {
-        return text.lowercase()
-            .replace('ά', 'α')
-            .replace('έ', 'ε')
-            .replace('ή', 'η')
-            .replace('ί', 'ι')
-            .replace('ό', 'ο')
-            .replace('ύ', 'υ')
-            .replace('ώ', 'ω')
-            .replace('ϊ', 'ι')
-            .replace('ϋ', 'υ')
+    /**
+     * Normalizes room names for comparison between different sources (OCR vs Schedule).
+     * e.g. "Αμφιθέατρο Α" -> "ΑΜΦΑ", "Αμφ. Β" -> "ΑΜΦΒ", "Α24" -> "Α24"
+     */
+    fun getCanonicalId(name: String): String {
+        return name.uppercase()
+            .replace("ΑΜΦΙΘΕΑΤΡΟ", "ΑΜΦ")
+            .replace("ΑΜΦ.", "ΑΜΦ")
+            .replace("ΑΙΘΟΥΣΑ", "")
+            .replace(Regex("[.\\s]+"), "") // Remove dots and spaces
+            .replace('A', 'Α')
+            .replace('B', 'Β')
+            .replace('E', 'Ε')
+            .replace('H', 'Η')
+            .replace('I', 'Ι')
+            .replace('K', 'Κ')
+            .replace('M', 'Μ')
+            .replace('N', 'Ν')
+            .replace('O', 'Ο')
+            .replace('P', 'Ρ')
+            .replace('T', 'Τ')
+            .replace('X', 'Χ')
+            .trim()
     }
 }
