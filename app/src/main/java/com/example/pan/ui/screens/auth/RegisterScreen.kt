@@ -26,17 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.example.pan.viewmodel.AuthState
 import com.example.pan.viewmodel.AuthViewModel
 
-private val UNIVERSITIES = listOf(
-    "ΟΠΑ - Οικονομικό Πανεπιστήμιο Αθηνών",
-    "ΕΚΠΑ - Εθνικό & Καποδιστριακό Πανεπιστήμιο",
-    "ΕΜΠ - Εθνικό Μετσόβιο Πολυτεχνείο",
-    "ΑΠΘ - Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης",
-    "Άλλο"
-)
-
 private val COUNTRY_CODES = listOf("+30", "+1", "+44", "+49", "+33", "+39", "+34", "+7")
-
-private val YEARS = listOf("1ο Έτος", "2ο Έτος", "3ο Έτος", "4ο Έτος", "5ο Έτος+")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,9 +39,7 @@ fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var universityExpanded  by remember { mutableStateOf(false) }
     var countryCodeExpanded by remember { mutableStateOf(false) }
-    var yearExpanded        by remember { mutableStateOf(false) }
 
     LaunchedEffect(authState) {
         when (val s = authState) {
@@ -254,85 +242,10 @@ fun RegisterScreen(
                     label         = "Αριθμός Τηλεφώνου",
                     leadingIcon   = Icons.Default.Phone,
                     keyboardType  = KeyboardType.Phone,
-                    imeAction     = ImeAction.Next,
-                    onNext        = { focusManager.moveFocus(FocusDirection.Down) },
+                    imeAction     = ImeAction.Done,
+                    onDone        = { focusManager.clearFocus() },
                     modifier      = Modifier.weight(1f)
                 )
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            SectionLabel("Ακαδημαϊκά Στοιχεία")
-
-            // University dropdown
-            ExposedDropdownMenuBox(
-                expanded         = universityExpanded,
-                onExpandedChange = { universityExpanded = it },
-                modifier         = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value         = viewModel.regUniversity.ifBlank { "" },
-                    onValueChange = {},
-                    readOnly      = true,
-                    label         = { Text("Πανεπιστήμιο") },
-                    leadingIcon   = { Icon(Icons.Default.School, contentDescription = null) },
-                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = universityExpanded) },
-                    placeholder   = { Text("Επιλέξτε πανεπιστήμιο") },
-                    modifier      = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                    shape      = RoundedCornerShape(14.dp),
-                    singleLine = true
-                )
-                ExposedDropdownMenu(
-                    expanded         = universityExpanded,
-                    onDismissRequest = { universityExpanded = false }
-                ) {
-                    UNIVERSITIES.forEach { uni ->
-                        DropdownMenuItem(
-                            text    = { Text(uni) },
-                            onClick = {
-                                viewModel.regUniversity = uni
-                                universityExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            // Year of study dropdown
-            ExposedDropdownMenuBox(
-                expanded         = yearExpanded,
-                onExpandedChange = { yearExpanded = it },
-                modifier         = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value         = viewModel.regYear.ifBlank { "" },
-                    onValueChange = {},
-                    readOnly      = true,
-                    label         = { Text("Έτος Σπουδών") },
-                    leadingIcon   = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = yearExpanded) },
-                    placeholder   = { Text("Επιλέξτε έτος") },
-                    modifier      = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                    shape      = RoundedCornerShape(14.dp),
-                    singleLine = true
-                )
-                ExposedDropdownMenu(
-                    expanded         = yearExpanded,
-                    onDismissRequest = { yearExpanded = false }
-                ) {
-                    YEARS.forEach { year ->
-                        DropdownMenuItem(
-                            text    = { Text(year) },
-                            onClick = {
-                                viewModel.regYear = year
-                                yearExpanded = false
-                            }
-                        )
-                    }
-                }
             }
 
             Spacer(Modifier.height(8.dp))

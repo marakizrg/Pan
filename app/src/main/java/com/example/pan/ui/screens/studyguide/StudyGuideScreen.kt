@@ -184,7 +184,7 @@ private fun CourseCard(course: Course, isExpanded: Boolean, onToggle: () -> Unit
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text  = "${course.semester} · ${course.ects} ECTS",
+                        text  = "Κωδικός: ${course.id} · ${course.semester}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -208,11 +208,13 @@ private fun CourseCard(course: Course, isExpanded: Boolean, onToggle: () -> Unit
                     HorizontalDivider()
                     Spacer(Modifier.height(12.dp))
 
+                    DetailRow(label = "Τύπος",     value = course.type)
+                    Spacer(Modifier.height(8.dp))
                     DetailRow(label = "Καθηγητής", value = course.professor)
                     Spacer(Modifier.height(8.dp))
                     DetailRow(label = "Εξάμηνο",   value = course.semester)
                     Spacer(Modifier.height(8.dp))
-                    DetailRow(label = "ECTS",       value = course.ects.toString())
+                    DetailRow(label = "ECTS",      value = course.ects)
                     Spacer(Modifier.height(12.dp))
 
                     Text(
@@ -226,6 +228,21 @@ private fun CourseCard(course: Course, isExpanded: Boolean, onToggle: () -> Unit
                         text  = course.description,
                         style = MaterialTheme.typography.bodySmall
                     )
+                    
+                    if (course.prerequisites.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text       = "Προαπαιτούμενα",
+                            style      = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text  = course.prerequisites,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
         }
@@ -234,15 +251,19 @@ private fun CourseCard(course: Course, isExpanded: Boolean, onToggle: () -> Unit
 
 @Composable
 private fun DetailRow(label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.Top) {
         Text(
             text       = "$label:",
             style      = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color      = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier   = Modifier.width(84.dp)
+            modifier   = Modifier.width(100.dp)
         )
         Spacer(Modifier.width(8.dp))
-        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text  = value, 
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

@@ -36,8 +36,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     var regEmail           by mutableStateOf("")
     var regPhone           by mutableStateOf("")
     var regCountryCode     by mutableStateOf("+30")
-    var regUniversity      by mutableStateOf("")
-    var regYear            by mutableStateOf("")
     var regPassword        by mutableStateOf("")
     var regPasswordConfirm by mutableStateOf("")
 
@@ -69,8 +67,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             regEmail.isBlank()                -> error("Παρακαλώ εισάγετε ακαδημαϊκό email.")
             !regEmail.contains("@")           -> error("Το email δεν είναι έγκυρο. Πρέπει να περιέχει @.")
             regPhone.isBlank()                -> error("Παρακαλώ εισάγετε αριθμό τηλεφώνου.")
-            regUniversity.isBlank()           -> error("Παρακαλώ επιλέξτε πανεπιστήμιο.")
-            regYear.isBlank()                 -> error("Παρακαλώ επιλέξτε έτος σπουδών.")
             regPassword.isBlank()             -> error("Παρακαλώ εισάγετε κωδικό πρόσβασης.")
             regPassword.length < 6            -> error("Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες.")
             regPassword != regPasswordConfirm -> error("Οι κωδικοί δεν ταιριάζουν.")
@@ -81,9 +77,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     firstName   = regFirstName.trim(),
                     lastName    = regLastName.trim(),
                     email       = regEmail.trim(),
-                    phone       = "$regCountryCode$regPhone",
-                    university  = regUniversity,
-                    yearOfStudy = regYear
+                    phone       = "$regCountryCode$regPhone"
                 )
                 val result = userPrefs.registerUser(user, regPassword)
                 _authState.value = if (result.isSuccess) {

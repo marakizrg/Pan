@@ -28,16 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pan.viewmodel.ProfileViewModel
 
-private val UNIVERSITIES = listOf(
-    "ΟΠΑ - Οικονομικό Πανεπιστήμιο Αθηνών",
-    "ΕΚΠΑ - Εθνικό & Καποδιστριακό Πανεπιστήμιο",
-    "ΕΜΠ - Εθνικό Μετσόβιο Πολυτεχνείο",
-    "ΑΠΘ - Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης",
-    "Άλλο"
-)
-
-private val YEARS = listOf("1ο Έτος", "2ο Έτος", "3ο Έτος", "4ο Έτος", "5ο Έτος+")
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -158,68 +148,6 @@ fun ProfileScreen(
                         imeAction     = ImeAction.Done,
                         onIme         = { focusManager.clearFocus() }
                     )
-
-                    // University dropdown
-                    var uniExpanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded         = uniExpanded,
-                        onExpandedChange = { uniExpanded = it },
-                        modifier         = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value         = viewModel.university,
-                            onValueChange = {},
-                            readOnly      = true,
-                            label         = { Text("Πανεπιστήμιο") },
-                            leadingIcon   = { Icon(Icons.Default.School, contentDescription = null) },
-                            trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(uniExpanded) },
-                            modifier      = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                            shape         = RoundedCornerShape(14.dp),
-                            singleLine    = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded         = uniExpanded,
-                            onDismissRequest = { uniExpanded = false }
-                        ) {
-                            UNIVERSITIES.forEach { uni ->
-                                DropdownMenuItem(
-                                    text    = { Text(uni) },
-                                    onClick = { viewModel.university = uni; uniExpanded = false }
-                                )
-                            }
-                        }
-                    }
-
-                    // Year dropdown
-                    var yearExpanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded         = yearExpanded,
-                        onExpandedChange = { yearExpanded = it },
-                        modifier         = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value         = viewModel.yearOfStudy,
-                            onValueChange = {},
-                            readOnly      = true,
-                            label         = { Text("Έτος Σπουδών") },
-                            leadingIcon   = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                            trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(yearExpanded) },
-                            modifier      = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                            shape         = RoundedCornerShape(14.dp),
-                            singleLine    = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded         = yearExpanded,
-                            onDismissRequest = { yearExpanded = false }
-                        ) {
-                            YEARS.forEach { year ->
-                                DropdownMenuItem(
-                                    text    = { Text(year) },
-                                    onClick = { viewModel.yearOfStudy = year; yearExpanded = false }
-                                )
-                            }
-                        }
-                    }
 
                     Button(
                         onClick   = { focusManager.clearFocus(); viewModel.saveProfile() },

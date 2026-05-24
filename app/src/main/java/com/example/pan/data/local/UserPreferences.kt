@@ -109,9 +109,7 @@ class UserPreferences(context: Context) {
                 firstName   = obj.getString("firstName"),
                 lastName    = obj.getString("lastName"),
                 email       = obj.getString("email"),
-                phone       = obj.getString("phone"),
-                university  = obj.getString("university"),
-                yearOfStudy = obj.getString("yearOfStudy")
+                phone       = obj.getString("phone")
             ) to obj.getString("passwordHash")
         }
     }
@@ -126,8 +124,6 @@ class UserPreferences(context: Context) {
                 put("lastName",     user.lastName)
                 put("email",        user.email)
                 put("phone",        user.phone)
-                put("university",   user.university)
-                put("yearOfStudy",  user.yearOfStudy)
                 put("passwordHash", hash)
             })
         }

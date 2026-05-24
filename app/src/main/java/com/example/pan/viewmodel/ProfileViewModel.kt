@@ -20,8 +20,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var lastName    by mutableStateOf("")
     var username    by mutableStateOf("")
     var email       by mutableStateOf("")
-    var university  by mutableStateOf("")
-    var yearOfStudy by mutableStateOf("")
 
     var newPassword        by mutableStateOf("")
     var confirmNewPassword by mutableStateOf("")
@@ -39,8 +37,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 lastName    = user.lastName
                 username    = user.username
                 email       = user.email
-                university  = user.university
-                yearOfStudy = user.yearOfStudy
             }
         }
     }
@@ -60,9 +56,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             lastName    = lastName.trim(),
             username    = username.trim(),
             email       = email.trim(),
-            phone       = currentPhone,
-            university  = university,
-            yearOfStudy = yearOfStudy
+            phone       = currentPhone
         )
         val result = userPrefs.updateUser(user)
         _message.value = if (result.isSuccess) "Το προφίλ αποθηκεύτηκε!"
