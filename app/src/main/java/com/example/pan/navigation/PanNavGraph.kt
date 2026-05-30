@@ -1,6 +1,7 @@
 package com.example.pan.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -21,10 +22,14 @@ import com.example.pan.viewmodel.AuthViewModel
 fun PanNavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val startDestination = remember {
+        if (UserPreferences(context).hasRememberedSession()) Screen.Dashboard.route
+        else Screen.Login.route
+    }
 
     NavHost(
         navController    = navController,
-        startDestination = Screen.Login.route
+        startDestination = startDestination
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
@@ -54,7 +59,10 @@ fun PanNavGraph(navController: NavHostController) {
             DashboardScreen(
                 onNavigateTo = { route -> navController.navigate(route) },
                 onLogout     = {
-                    UserPreferences(context).clearCurrentUserId()
+                    UserPreferences(context).apply {
+                        clearCurrentUserId()
+                        setRememberMe(false)
+                    }
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(navController.graph.id) { inclusive = true }

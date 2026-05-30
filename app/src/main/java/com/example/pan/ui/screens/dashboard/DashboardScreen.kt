@@ -317,7 +317,7 @@ private fun CalendarCard(schedule: List<ScheduleEntry>) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             val isLab = entry.course.contains("Φροντιστήριο", ignoreCase = true)
-                            val accentColor = if (isLab) Color(0xFFD32F2F) else MaterialTheme.colorScheme.primary
+                            val accentColor = if (isLab) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
 
                             Text(
                                 text = entry.time,
@@ -341,7 +341,7 @@ private fun CalendarCard(schedule: List<ScheduleEntry>) {
                                     text = entry.course,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isLab) Color(0xFFD32F2F) else MaterialTheme.colorScheme.onSurface,
+                                    color = if (isLab) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )

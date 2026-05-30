@@ -25,45 +25,51 @@ object ScheduleChecker {
         "Sunday"    to "Κυριακή"
     )
 
+    private val dayOrder = mapOf(
+        "Monday" to 1, "Tuesday" to 2, "Wednesday" to 3, "Thursday" to 4,
+        "Friday" to 5, "Saturday" to 6, "Sunday" to 7
+    )
+
     private const val CLASS_DURATION_MINUTES = 90
 
     /**
-     * Cross-references [room] against [schedule] for today.
-     * Returns a localised Greek message suitable for the UI overlay.
+     * Cross-references [room] against [schedule] across the whole week.
+     * Lists every lesson scheduled in this room, sorted by day/time, and
+     * highlights an ongoing lesson if one is currently in progress.
      */
     fun checkRoom(room: String, schedule: List<ScheduleEntry>): String {
-        val now      = Calendar.getInstance()
-        val todayKey = dayFromCalendar[now.get(Calendar.DAY_OF_WEEK)] ?: return NO_CLASS_MSG
-
-        // Use canonical IDs for robust comparison between OCR results and schedule data
         val roomID = ClassroomMatcher.getCanonicalId(room)
 
-        val todayEntries = schedule.filter { entry ->
-            entry.day.equals(todayKey, ignoreCase = true) &&
-            ClassroomMatcher.getCanonicalId(entry.room) == roomID
-        }
+        val roomEntries = schedule
+            .filter { ClassroomMatcher.getCanonicalId(it.room) == roomID }
+            .sortedWith(compareBy(
+                { dayOrder[it.day] ?: 99 },
+                { parseMinutes(it.time) ?: Int.MAX_VALUE }
+            ))
 
-        if (todayEntries.isEmpty()) return NO_CLASS_MSG
+        if (roomEntries.isEmpty()) return NO_CLASS_MSG
 
+        val now        = Calendar.getInstance()
+        val todayKey   = dayFromCalendar[now.get(Calendar.DAY_OF_WEEK)]
         val currentMin = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
 
-        for (entry in todayEntries) {
-            val start = parseMinutes(entry.time) ?: continue
-            if (currentMin in start until (start + CLASS_DURATION_MINUTES)) {
-                return "Έχεις μάθημα τώρα: ${entry.course}"
-            }
+        val ongoing = roomEntries.firstOrNull { entry ->
+            entry.day.equals(todayKey, ignoreCase = true) &&
+                (parseMinutes(entry.time)?.let { currentMin in it until (it + CLASS_DURATION_MINUTES) } == true)
         }
 
-        val upcoming = todayEntries
-            .filter  { (parseMinutes(it.time) ?: -1) > currentMin }
-            .minByOrNull { parseMinutes(it.time) ?: Int.MAX_VALUE }
+        val list = roomEntries.joinToString("\n") { entry ->
+            val greekDay = greekDayName[entry.day] ?: entry.day
+            "• $greekDay ${entry.time} — ${entry.course}"
+        }
 
-        return if (upcoming != null) {
-            val greekDay = greekDayName[todayKey] ?: todayKey
-            "Επόμενο μάθημα εδώ: ${upcoming.course} — $greekDay ${upcoming.time}"
+        val header = if (ongoing != null) {
+            "Έχεις μάθημα τώρα: ${ongoing.course}\n\nΌλα τα μαθήματα σε αυτή την αίθουσα:"
         } else {
-            NO_CLASS_MSG
+            "Έχεις μαθήματα σε αυτή την αίθουσα:"
         }
+
+        return "$header\n$list"
     }
 
     private fun parseMinutes(time: String): Int? {
@@ -74,5 +80,5 @@ object ScheduleChecker {
         return h * 60 + m
     }
 
-    private const val NO_CLASS_MSG = "Δεν έχεις μάθημα σε αυτή την αίθουσα σήμερα"
+    private const val NO_CLASS_MSG = "Δεν έχεις μαθήματα σε αυτή την αίθουσα"
 }

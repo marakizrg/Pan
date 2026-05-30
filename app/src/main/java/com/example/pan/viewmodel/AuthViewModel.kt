@@ -52,6 +52,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             val user = userPrefs.loginUser(loginEmail.trim(), loginPassword)
             _authState.value = if (user != null) {
                 userPrefs.setCurrentUserId(user.id)
+                userPrefs.setRememberMe(rememberMe)
                 AuthState.Success(user)
             } else {
                 AuthState.Error("Λανθασμένο email/όνομα χρήστη ή κωδικός.")
@@ -83,6 +84,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _authState.value = if (result.isSuccess) {
                     val savedUser = result.getOrThrow()
                     userPrefs.setCurrentUserId(savedUser.id)
+                    userPrefs.setRememberMe(true)
                     AuthState.Success(savedUser)
                 } else {
                     AuthState.Error(result.exceptionOrNull()?.message ?: "Σφάλμα εγγραφής.")

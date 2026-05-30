@@ -45,6 +45,15 @@ class UserPreferences(context: Context) {
         prefs.edit().remove("current_user_id").apply()
     }
 
+    fun setRememberMe(remember: Boolean) {
+        prefs.edit().putBoolean("remember_me", remember).apply()
+    }
+
+    fun isRemembered(): Boolean = prefs.getBoolean("remember_me", false)
+
+    fun hasRememberedSession(): Boolean =
+        isRemembered() && getCurrentUserId() != null
+
     // ── Schedule ──────────────────────────────────────────────────────────────
 
     fun saveScheduleImported(userId: String) {
