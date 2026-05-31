@@ -8,7 +8,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.pan.ui.screens.auth.LoginScreen
 import com.example.pan.ui.screens.auth.RegisterScreen
+import com.example.pan.ui.screens.classlocator.Building3DTourScreen
 import com.example.pan.ui.screens.classlocator.ClassLocatorScreen
+import com.example.pan.ui.screens.classlocator.PatisionLocatorScreen
 import com.example.pan.ui.screens.classroomscanner.ClassroomScannerScreen
 import com.example.pan.ui.screens.dashboard.DashboardScreen
 import com.example.pan.ui.screens.diplomapal.DiplomaPalScreen
@@ -87,7 +89,19 @@ fun PanNavGraph(navController: NavHostController) {
         }
 
         composable(Screen.ClassLocator.route) {
-            ClassLocatorScreen(onBack = { navController.popBackStack() })
+            ClassLocatorScreen(
+                onBack           = { navController.popBackStack() },
+                onSelectTour     = { navController.navigate(Screen.ClassLocatorTour.route) },
+                onSelectPatision = { navController.navigate(Screen.ClassLocatorPatision.route) }
+            )
+        }
+
+        composable(Screen.ClassLocatorTour.route) {
+            Building3DTourScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.ClassLocatorPatision.route) {
+            PatisionLocatorScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.ClassroomScanner.route) {
