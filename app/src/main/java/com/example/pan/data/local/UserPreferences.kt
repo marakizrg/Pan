@@ -1,36 +1,44 @@
 package com.example.pan.data.local
 
 import android.content.Context
+import com.example.pan.data.local.db.CheckedCourseEntity
+import com.example.pan.data.local.db.PanDatabase
+import com.example.pan.data.local.db.UserEntity
 import com.example.pan.data.model.User
-import org.json.JSONArray
-import org.json.JSONObject
 import java.security.MessageDigest
 import java.util.UUID
 
+/**
+ * Facade over local persistence.
+ *
+ *  - User accounts, password hashes, checked courses and the schedule-imported
+ *    flag live in a Room/SQLite database ([PanDatabase]).
+ *  - The lightweight session pointers (current user id, remember-me) stay in
+ *    SharedPreferences — they are read synchronously during composition and are
+ *    session state rather than data.
+ *
+ * Public method signatures are unchanged so existing callers need no edits.
+ */
 class UserPreferences(context: Context) {
 
-    private val prefs = context.getSharedPreferences("pan_users", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("pan_session", Context.MODE_PRIVATE)
+    private val dao = PanDatabase.get(context).panDao()
 
     // ── Auth ─────────────────────────────────────────────────────────────────
 
     fun registerUser(user: User, password: String): Result<User> {
-        val users = loadUsers()
-        if (users.any { it.first.email.equals(user.email, ignoreCase = true) })
+        if (dao.emailTaken(user.email, excludeId = ""))
             return Result.failure(Exception("Αυτό το email χρησιμοποιείται ήδη."))
-        if (users.any { it.first.username.equals(user.username, ignoreCase = true) })
+        if (dao.usernameTaken(user.username, excludeId = ""))
             return Result.failure(Exception("Αυτό το όνομα χρήστη χρησιμοποιείται ήδη."))
         val userWithId = user.copy(id = UUID.randomUUID().toString())
-        saveUsers(users + (userWithId to sha256(password)))
+        dao.insertUser(userWithId.toEntity(sha256(password)))
         return Result.success(userWithId)
     }
 
     fun loginUser(emailOrUsername: String, password: String): User? {
-        val hashed = sha256(password)
-        return loadUsers().firstOrNull { (user, hash) ->
-            hash == hashed &&
-            (user.email.equals(emailOrUsername, ignoreCase = true) ||
-             user.username.equals(emailOrUsername, ignoreCase = true))
-        }?.first
+        val entity = dao.getUserByEmailOrUsername(emailOrUsername) ?: return null
+        return if (entity.passwordHash == sha256(password)) entity.toUser() else null
     }
 
     // ── Session ───────────────────────────────────────────────────────────────
@@ -57,87 +65,68 @@ class UserPreferences(context: Context) {
     // ── Schedule ──────────────────────────────────────────────────────────────
 
     fun saveScheduleImported(userId: String) {
-        prefs.edit().putBoolean("schedule_$userId", true).apply()
+        dao.setScheduleImported(userId, true)
     }
 
     fun isScheduleImported(userId: String): Boolean =
-        prefs.getBoolean("schedule_$userId", false)
+        dao.getUserById(userId)?.scheduleImported == true
 
     // ── Profile ───────────────────────────────────────────────────────────────
 
-    fun getUserById(userId: String): User? =
-        loadUsers().firstOrNull { it.first.id == userId }?.first
+    fun getUserById(userId: String): User? = dao.getUserById(userId)?.toUser()
 
     fun updateUser(updatedUser: User): Result<Unit> {
-        val users = loadUsers()
-        val index = users.indexOfFirst { it.first.id == updatedUser.id }
-        if (index == -1) return Result.failure(Exception("Χρήστης δεν βρέθηκε."))
-        val others = users.filterIndexed { i, _ -> i != index }
-        if (others.any { it.first.email.equals(updatedUser.email, ignoreCase = true) })
+        dao.getUserById(updatedUser.id)
+            ?: return Result.failure(Exception("Χρήστης δεν βρέθηκε."))
+        if (dao.emailTaken(updatedUser.email, excludeId = updatedUser.id))
             return Result.failure(Exception("Αυτό το email χρησιμοποιείται ήδη."))
-        if (others.any { it.first.username.equals(updatedUser.username, ignoreCase = true) })
+        if (dao.usernameTaken(updatedUser.username, excludeId = updatedUser.id))
             return Result.failure(Exception("Αυτό το όνομα χρήστη χρησιμοποιείται ήδη."))
-        val updated = users.mapIndexed { i, pair -> if (i == index) updatedUser to pair.second else pair }
-        saveUsers(updated)
+        dao.updateProfile(
+            id        = updatedUser.id,
+            username  = updatedUser.username,
+            firstName = updatedUser.firstName,
+            lastName  = updatedUser.lastName,
+            email     = updatedUser.email,
+            phone     = updatedUser.phone
+        )
         return Result.success(Unit)
     }
 
     fun updatePassword(userId: String, newPassword: String) {
-        val users = loadUsers()
-        val index = users.indexOfFirst { it.first.id == userId }
-        if (index == -1) return
-        val updated = users.mapIndexed { i, pair ->
-            if (i == index) pair.first to sha256(newPassword) else pair
-        }
-        saveUsers(updated)
+        dao.updatePassword(userId, sha256(newPassword))
     }
 
     // ── DiplomaPal ────────────────────────────────────────────────────────────
 
     fun saveCheckedCourses(userId: String, courseIds: Set<String>) {
-        val arr = JSONArray().also { a -> courseIds.forEach { a.put(it) } }
-        prefs.edit().putString("courses_$userId", arr.toString()).apply()
+        dao.clearCheckedCourses(userId)
+        dao.insertCheckedCourses(courseIds.map { CheckedCourseEntity(userId, it) })
     }
 
-    fun loadCheckedCourses(userId: String): Set<String> {
-        val json = prefs.getString("courses_$userId", "[]") ?: "[]"
-        val arr = JSONArray(json)
-        return (0 until arr.length()).mapTo(mutableSetOf()) { arr.getString(it) }
-    }
+    fun loadCheckedCourses(userId: String): Set<String> =
+        dao.getCheckedCourseIds(userId).toSet()
 
-    // ── Internal ──────────────────────────────────────────────────────────────
+    // ── Mapping ───────────────────────────────────────────────────────────────
 
-    private fun loadUsers(): List<Pair<User, String>> {
-        val json = prefs.getString("users", "[]") ?: "[]"
-        val arr = JSONArray(json)
-        return (0 until arr.length()).map { i ->
-            val obj = arr.getJSONObject(i)
-            User(
-                id          = obj.getString("id"),
-                username    = obj.getString("username"),
-                firstName   = obj.getString("firstName"),
-                lastName    = obj.getString("lastName"),
-                email       = obj.getString("email"),
-                phone       = obj.getString("phone")
-            ) to obj.getString("passwordHash")
-        }
-    }
+    private fun User.toEntity(passwordHash: String) = UserEntity(
+        id = id,
+        username = username,
+        firstName = firstName,
+        lastName = lastName,
+        email = email,
+        phone = phone,
+        passwordHash = passwordHash
+    )
 
-    private fun saveUsers(users: List<Pair<User, String>>) {
-        val arr = JSONArray()
-        users.forEach { (user, hash) ->
-            arr.put(JSONObject().apply {
-                put("id",           user.id)
-                put("username",     user.username)
-                put("firstName",    user.firstName)
-                put("lastName",     user.lastName)
-                put("email",        user.email)
-                put("phone",        user.phone)
-                put("passwordHash", hash)
-            })
-        }
-        prefs.edit().putString("users", arr.toString()).apply()
-    }
+    private fun UserEntity.toUser() = User(
+        id = id,
+        username = username,
+        firstName = firstName,
+        lastName = lastName,
+        email = email,
+        phone = phone
+    )
 
     private fun sha256(input: String): String =
         MessageDigest.getInstance("SHA-256")
